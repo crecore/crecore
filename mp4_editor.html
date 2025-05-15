@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>웹 브라우저 MP4 동영상 편집기</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+        
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+            border-left: 4px solid #3498db;
+        }
+        
+        .section-title {
+            margin-bottom: 15px;
+            color: #2c3e50;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 5px;
+        }
+        
+        .upload-container {
+            text-align: center;
+        }
+        
+        #file-upload {
+            display: none;
+        }
+        
+        .upload-btn {
+            display: inline-block;
+            background-color: #3498db;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .upload-btn:hover {
+            background-color: #2980b9;
+        }
+        
+        .video-container {
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        video {
+            max-width: 100%;
+            height: auto;
+            border-radius: 5px;
+            background-color: #000;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+        }
+        
+        .time-input {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 15px 0;
+        }
+        
+        .time-input label {
+            margin-right: 10px;
+            width: 100px;
+        }
+        
+        .time-input input {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            flex-grow: 1;
+        }
+        
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        button:hover {
+            background-color: #2980b9;
+        }
+        
+        button:disabled {
+            background-color: #95a5a6;
+            cursor: not-allowed;
+        }
+        
+        .btn-danger {
+            background-color: #e74c3c;
+        }
+        
+        .btn-danger:hover {
+            background-color: #c0392b;
+        }
+        
+        .segments-list {
+            margin-top: 20px;
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 10px;
+        }
+        
+        .segment-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .segment-item:last-child {
+            border-bottom: none;
+        }
+        
+        .segment-info {
+            flex-grow: 1;
+        }
+        
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            z-index: 1000;
+            color: white;
+            display: none;
+        }
+        
+        .loading-spinner {
+            border: 5px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 5px solid white;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .timeline {
+            position: relative;
+            height: 50px;
+            background-color: #eee;
+            margin: 20px 0;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        
+        .timeline-progress {
+            position: absolute;
+            height: 100%;
+            background-color: #3498db;
+            width: 0;
+            opacity: 0.3;
+        }
+        
+        .timeline-marker {
+            position: absolute;
+            top: 0;
+            width: 2px;
+            height: 100%;
+            background-color: red;
+            z-index: 5;
+        }
+        
+        .download-section {
+            text-align: center;
+            margin-top: 20px;
+        }
+        
+        #download-link {
+            display: inline-block;
+            background-color: #27ae60;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            text-decoration: none;
+            margin-top: 10px;
+            transition: background-color 0.3s;
+        }
+        
+        #download-link:hover {
+            background-color: #2ecc71;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .status-message {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            background-color: #f8f9fa;
+            border-left: 4px solid #6c757d;
+        }
+        
+        .error-message {
+            background-color: #fff5f5;
+            border-left-color: #e74c3c;
+            color: #e74c3c;
+        }
+        
+        .success-message {
+            background-color: #f4fff5;
+            border-left-color: #27ae60;
+            color: #27ae60;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>웹 브라우저 MP4 동영상 편집기</h1>
+        
+        <div class="section">
+            <h2 class="section-title">1. 동영상 업로드</h2>
+            <div class="upload-container">
+                <input type="file" id="file-upload" accept="video/mp4">
+                <label for="file-upload" class="upload-btn">MP4 파일 선택</label>
+                <div id="file-name" class="status-message hidden"></div>
+            </div>
+        </div>
+        
+        <div class="section" id="video-section" style="display: none;">
+            <h2 class="section-title">2. 동영상 미리보기</h2>
+            <div class="video-container">
+                <video id="video-preview" controls></video>
+                <div class="timeline">
+                    <div class="timeline-progress"></div>
+                    <div class="timeline-marker" style="display: none;"></div>
+                </div>
+                <div class="controls">
+                    <button id="set-start-time">현재 위치를 시작 시간으로 설정</button>
+                    <button id="set-end-time">현재 위치를 종료 시간으로 설정</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="section" id="editing-section" style="display: none;">
+            <h2 class="section-title">3. 편집 구간 선택</h2>
+            <div class="time-input">
+                <label for="start-time">시작 시간:</label>
+                <input type="text" id="start-time" placeholder="예: 00:01:30 또는 초 단위(90)">
+            </div>
+            <div class="time-input">
+                <label for="end-time">종료 시간:</label>
+                <input type="text" id="end-time" placeholder="예: 00:02:15 또는 초 단위(135)">
+            </div>
+            <button id="add-segment">구간 추가</button>
+            
+            <div class="segments-list" id="segments-container">
+                <div id="no-segments-message">편집할 구간이 없습니다. 위에서 시작/종료 시간을 설정하고 구간을 추가하세요.</div>
+            </div>
+        </div>
+        
+        <div class="section" id="export-section" style="display: none;">
+            <h2 class="section-title">4. 편집 및 내보내기</h2>
+            <button id="process-video" disabled>편집 및 내보내기</button>
+            <div class="status-message hidden" id="status-message"></div>
+            
+            <div class="download-section hidden" id="download-section">
+                <h3>편집 완료!</h3>
+                <a href="#" id="download-link" download="edited_video.mp4">편집된 동영상 다운로드</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="loading-spinner"></div>
+        <p id="processing-status">FFmpeg 초기화 중...</p>
+    </div>
+
+    <!-- FFmpeg.wasm 스크립트 -->
+    <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.11.0/dist/ffmpeg-core.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 필요한 DOM 요소들
+            const fileUpload = document.getElementById('file-upload');
+            const fileName = document.getElementById('file-name');
+            const videoSection = document.getElementById('video-section');
+            const editingSection = document.getElementById('editing-section');
+            const exportSection = document.getElementById('export-section');
+            const videoPreview = document.getElementById('video-preview');
+            const timelineProgress = document.querySelector('.timeline-progress');
+            const timelineMarker = document.querySelector('.timeline-marker');
+            const startTimeInput = document.getElementById('start-time');
+            const endTimeInput = document.getElementById('end-time');
+            const addSegmentBtn = document.getElementById('add-segment');
+            const segmentsContainer = document.getElementById('segments-container');
+            const noSegmentsMessage = document.getElementById('no-segments-message');
+            const processVideoBtn = document.getElementById('process-video');
+            const loadingOverlay = document.getElementById('loading-overlay');
+            const processingStatus = document.getElementById('processing-status');
+            const setStartTimeBtn = document.getElementById('set-start-time');
+            const setEndTimeBtn = document.getElementById('set-end-time');
+            const statusMessage = document.getElementById('status-message');
+            const downloadSection = document.getElementById('download-section');
+            const downloadLink = document.getElementById('download-link');
+            
+            // 상태 변수들
+            let ffmpeg = null;
+            let originalVideo = null;
+            let segments = [];
+            let isProcessing = false;
+            
+            // FFmpeg 초기화
+            async function initFFmpeg() {
+                try {
+                    ffmpeg = new FFmpegWASM.CreateFFmpeg({
+                        log: true,
+                        progress: ({ ratio }) => {
+                            processingStatus.textContent = `처리 중... ${(ratio * 100).toFixed(2)}%`;
+                        }
+                    });
+                    
+                    showLoading('FFmpeg 초기화 중...');
+                    await ffmpeg.load();
+                    hideLoading();
+                    console.log('FFmpeg 초기화 완료');
+                } catch (error) {
+                    console.error('FFmpeg 초기화 실패:', error);
+                    showError('FFmpeg를 초기화하는 데 실패했습니다. 페이지를 새로고침하고 다시 시도해주세요.');
+                    hideLoading();
+                }
+            }
+            
+            // 페이지 로드 시 FFmpeg 초기화
+            initFFmpeg();
+            
+            // 파일 업로드 처리
+            fileUpload.addEventListener('change', function(e) {
+                if (e.target.files.length === 0) return;
+                
+                const file = e.target.files[0];
+                if (file.type !== 'video/mp4') {
+                    showError('MP4 파일만 지원합니다.');
+                    return;
+                }
+                
+                // 파일 정보 표시
+                fileName.textContent = `선택된 파일: ${file.name} (${formatFileSize(file.size)})`;
+                fileName.classList.remove('hidden');
+                
+                // 비디오 소스 설정
+                originalVideo = file;
+                const videoURL = URL.createObjectURL(file);
+                videoPreview.src = videoURL;
+                
+                // 섹션 표시
+                videoSection.style.display = 'block';
+                editingSection.style.display = 'block';
+                exportSection.style.display = 'block';
+                
+                // 이전 데이터 초기화
+                segments = [];
+                updateSegmentsList();
+                processVideoBtn.disabled = true;
+                hideDownloadSection();
+                resetStatusMessage();
+            });
+            
+            // 비디오 타임라인 업데이트
+            videoPreview.addEventListener('timeupdate', function() {
+                const progress = (videoPreview.currentTime / videoPreview.duration) * 100;
+                timelineProgress.style.width = `${progress}%`;
+                timelineMarker.style.left = `${progress}%`;
+                timelineMarker.style.display = 'block';
+            });
+            
+            // '현재 위치를 시작 시간으로 설정' 버튼 클릭 처리
+            setStartTimeBtn.addEventListener('click', function() {
+                startTimeInput.value = formatTime(videoPreview.currentTime);
+            });
+            
+            // '현재 위치를 종료 시간으로 설정' 버튼 클릭 처리
+            setEndTimeBtn.addEventListener('click', function() {
+                endTimeInput.value = formatTime(videoPreview.currentTime);
+            });
+            
+            // '구간 추가' 버튼 클릭 처리
+            addSegmentBtn.addEventListener('click', function() {
+                const startTimeStr = startTimeInput.value.trim();
+                const endTimeStr = endTimeInput.value.trim();
+                
+                if (!startTimeStr || !endTimeStr) {
+                    showError('시작 시간과 종료 시간을 모두 입력해주세요.');
+                    return;
+                }
+                
+                const startTime = parseTimeInput(startTimeStr);
+                const endTime = parseTimeInput(endTimeStr);
+                
+                if (isNaN(startTime) || isNaN(endTime)) {
+                    showError('유효하지 않은 시간 형식입니다. "HH:MM:SS" 또는 초 단위 숫자로 입력해주세요.');
+                    return;
+                }
+                
+                if (startTime >= endTime) {
+                    showError('종료 시간은 시작 시간보다 커야 합니다.');
+                    return;
+                }
+                
+                if (endTime > videoPreview.duration) {
+                    showError('종료 시간이 동영상 길이를 초과합니다.');
+                    return;
+                }
+                
+                // 새 구간 추가
+                const segment = {
+                    id: Date.now(),
+                    startTime,
+                    endTime,
+                    startTimeFormatted: formatTime(startTime),
+                    endTimeFormatted: formatTime(endTime)
+                };
+                
+                segments.push(segment);
+                updateSegmentsList();
+                
+                // 입력 필드 초기화
+                startTimeInput.value = '';
+                endTimeInput.value = '';
+                
+                // '편집 및 내보내기' 버튼 활성화
+                processVideoBtn.disabled = segments.length === 0;
+                
+                resetStatusMessage();
+            });
+            
+            // '편집 및 내보내기' 버튼 클릭 처리
+            processVideoBtn.addEventListener('click', async function() {
+                if (isProcessing || segments.length === 0) return;
+                
+                try {
+                    isProcessing = true;
+                    showLoading('편집 준비 중...');
+                    processVideoBtn.disabled = true;
+                    
+                    // 원본 비디오 파일을 FFmpeg 가상 파일 시스템에 쓰기
+                    ffmpeg.FS('writeFile', 'input.mp4', await fetchFile(originalVideo));
+                    
+                    // 세그먼트 추출
+                    processingStatus.textContent = '구간 추출 중...';
+                    const segmentFiles = [];
+                    
+                    for (let i = 0; i < segments.length; i++) {
+                        const segment = segments[i];
+                        const outputFilename = `segment_${i}.mp4`;
+                        
+                        processingStatus.textContent = `구간 ${i+1}/${segments.length} 추출 중...`;
+                        await ffmpeg.run(
+                            '-i', 'input.mp4',
+                            '-ss', segment.startTime.toString(),
+                            '-to', segment.endTime.toString(),
+                            '-c', 'copy',
+                            outputFilename
+                        );
+                        
+                        segmentFiles.push(outputFilename);
+                    }
+                    
+                    // 세그먼트 목록 파일 생성
+                    processingStatus.textContent = '세그먼트 목록 생성 중...';
+                    let listContent = '';
+                    segmentFiles.forEach(file => {
+                        listContent += `file '${file}'\n`;
+                    });
+                    
+                    ffmpeg.FS('writeFile', 'mylist.txt', listContent);
+                    
+                    // 세그먼트 결합
+                    processingStatus.textContent = '세그먼트 결합 중...';
+                    await ffmpeg.run(
+                        '-f', 'concat',
+                        '-safe', '0',
+                        '-i', 'mylist.txt',
+                        '-c', 'copy',
+                        'output.mp4'
+                    );
+                    
+                    // 결과 파일 읽기
+                    processingStatus.textContent = '결과물 준비 중...';
+                    const data = ffmpeg.FS('readFile', 'output.mp4');
+                    const blob = new Blob([data.buffer], { type: 'video/mp4' });
+                    
+                    // 다운로드 링크 설정
+                    const url = URL.createObjectURL(blob);
+                    downloadLink.href = url;
+                    showDownloadSection();
+                    
+                    processingStatus.textContent = '편집 완료!';
+                    showSuccess('동영상 편집이 완료되었습니다. 다운로드 버튼을 클릭하여 저장하세요.');
+                    
+                } catch (error) {
+                    console.error('동영상 처리 중 오류 발생:', error);
+                    showError('동영상 처리 중 오류가 발생했습니다: ' + error.message);
+                } finally {
+                    hideLoading();
+                    isProcessing = false;
+                    processVideoBtn.disabled = false;
+                }
+            });
+            
+            // 세그먼트 목록 업데이트
+            function updateSegmentsList() {
+                if (segments.length === 0) {
+                    noSegmentsMessage.style.display = 'block';
+                    segmentsContainer.innerHTML = noSegmentsMessage.outerHTML;
+                    return;
+                }
+                
+                noSegmentsMessage.style.display = 'none';
+                segmentsContainer.innerHTML = '';
+                
+                segments.forEach((segment, index) => {
+                    const segmentItem = document.createElement('div');
+                    segmentItem.classList.add('segment-item');
+                    
+                    const segmentInfo = document.createElement('div');
+                    segmentInfo.classList.add('segment-info');
+                    segmentInfo.textContent = `구간 ${index + 1}: ${segment.startTimeFormatted} - ${segment.endTimeFormatted} (${(segment.endTime - segment.startTime).toFixed(2)}초)`;
+                    
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.classList.add('btn-danger');
+                    deleteBtn.textContent = '삭제';
+                    deleteBtn.addEventListener('click', () => {
+                        segments = segments.filter(s => s.id !== segment.id);
+                        updateSegmentsList();
+                        processVideoBtn.disabled = segments.length === 0;
+                    });
+                    
+                    segmentItem.appendChild(segmentInfo);
+                    segmentItem.appendChild(deleteBtn);
+                    segmentsContainer.appendChild(segmentItem);
+                });
+            }
+            
+            // 로딩 오버레이 표시/숨김
+            function showLoading(message) {
+                processingStatus.textContent = message || '처리 중...';
+                loadingOverlay.style.display = 'flex';
+            }
+            
+            function hideLoading() {
+                loadingOverlay.style.display = 'none';
+            }
+            
+            // 다운로드 섹션 표시/숨김
+            function showDownloadSection() {
+                downloadSection.classList.remove('hidden');
+            }
+            
+            function hideDownloadSection() {
+                downloadSection.classList.add('hidden');
+            }
+            
+            // 상태 메시지 표시/숨김
+            function showError(message) {
+                statusMessage.textContent = message;
+                statusMessage.classList.remove('hidden', 'success-message');
+                statusMessage.classList.add('error-message');
+            }
+            
+            function showSuccess(message) {
+                statusMessage.textContent = message;
+                statusMessage.classList.remove('hidden', 'error-message');
+                statusMessage.classList.add('success-message');
+            }
+            
+            function resetStatusMessage() {
+                statusMessage.classList.add('hidden');
+                statusMessage.classList.remove('error-message', 'success-message');
+            }
+            
+            // 유틸리티 함수들
+            function formatTime(seconds) {
+                seconds = Math.floor(seconds);
+                const h = Math.floor(seconds / 3600);
+                const m = Math.floor((seconds % 3600) / 60);
+                const s = Math.floor(seconds % 60);
+                return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+            }
+            
+            function parseTimeInput(timeStr) {
+                // 숫자만 있는 경우 (초 단위)
+                if (/^\d+(\.\d*)?$/.test(timeStr)) {
+                    return parseFloat(timeStr);
+                }
+                
+                // "HH:MM:SS" 형식
+                const match = timeStr.match(/^(\d+):(\d+):(\d+)$/);
+                if (match) {
+                    const hours = parseInt(match[1], 10);
+                    const minutes = parseInt(match[2], 10);
+                    const seconds = parseInt(match[3], 10);
+                    return hours * 3600 + minutes * 60 + seconds;
+                }
+                
+                // "MM:SS" 형식
+                const shortMatch = timeStr.match(/^(\d+):(\d+)$/);
+                if (shortMatch) {
+                    const minutes = parseInt(shortMatch[1], 10);
+                    const seconds = parseInt(shortMatch[2], 10);
+                    return minutes * 60 + seconds;
+                }
+                
+                return NaN;
+            }
+            
+            function formatFileSize(bytes) {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            }
+            
+            // Fetch File 유틸리티 함수 (FFmpeg.wasm에서 사용)
+            async function fetchFile(file) {
+                const data = await file.arrayBuffer();
+                return new Uint8Array(data);
+            }
+        });
+    </script>
+</body>
+</html>
