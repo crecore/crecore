@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gemini File Analyzer</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
+            display: flex;
+            justify-content: center;
+        }
+        .container {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 600px;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #555;
+        }
+        input[type="file"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .results {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #e9ecef;
+            border-radius: 4px;
+            border: 1px solid #ced4da;
+        }
+        .results h2 {
+            margin-top: 0;
+            color: #333;
+        }
+        .results pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            background-color: #fff;
+            padding: 15px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Gemini File Analyzer</h1>
+        <form id="analyzer-form">
+            <div class="form-group">
+                <label for="file-input">Attach File:</label>
+                <input type="file" id="file-input" name="file-input">
+            </div>
+
+            <div class="form-group">
+                <label for="query-input">Your Query:</label>
+                <textarea id="query-input" name="query-input" placeholder="Enter your query about the file..."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="model-select">Select Model:</label>
+                <select id="model-select" name="model-select">
+                    <option value="gemini-2.0-flash">gemini-2.0-flash</option>
+                    <option value="gemini-2.5-flash-preview-05-20">gemini-2.5-flash-preview-05-20</option>
+                    <option value="gemini-2.5-pro-preview-06-05">gemini-2.5-pro-preview-06-05</option>
+                    <option value="gemini-1.5-pro">gemini-1.5-pro</option>
+                </select>
+            </div>
+
+            <button type="submit">Analyze</button>
+        </form>
+
+        <div class="results" id="results-output" style="display: none;">
+            <h2>Analysis Results</h2>
+            <pre></pre>
+        </div>
+    </div>
+    <script>
+    document.getElementById('analyzer-form').addEventListener('submit', function(event) {
+        event.preventDefault(); // Prevent actual form submission
+
+        const fileInput = document.getElementById('file-input');
+        const queryInput = document.getElementById('query-input').value;
+        const modelSelect = document.getElementById('model-select').value;
+        const resultsOutput = document.getElementById('results-output');
+        const resultsPre = resultsOutput.querySelector('pre');
+
+        let fileDetails = "No file selected.";
+        if (fileInput.files.length > 0) {
+            const file = fileInput.files[0];
+            fileDetails = `File Name: ${file.name}\nFile Type: ${file.type}\nFile Size: ${file.size} bytes`;
+        }
+
+        const outputText = `
+Selected File:
+${fileDetails}
+
+Query:
+${queryInput}
+
+Selected Model:
+${modelSelect}
+
+---
+(Note: This is a frontend-only demonstration. Actual analysis would require a backend call to the Gemini API.)
+        `;
+
+        resultsPre.textContent = outputText;
+        resultsOutput.style.display = 'block';
+    });
+</script>
+</body>
+</html>
